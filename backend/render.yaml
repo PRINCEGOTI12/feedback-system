@@ -1,0 +1,20 @@
+# Render.yaml for backend deployment
+# Usage: Push this to GitHub, then Render will auto-detect and deploy
+
+services:
+  - type: web
+    name: feedback-api
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: DB_HOST
+        value: 127.0.0.1
+      - key: DB_PORT
+        value: 3306
+      - key: DB_USER
+        value: root
+      - key: DB_PASSWORD
+        scope: secret
+      - key: DB_NAME
+        value: feedback system
