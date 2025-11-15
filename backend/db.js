@@ -32,8 +32,17 @@ async function init() {
     }
 
     // Create database if not exists (use backticks to allow spaces if provided)
-    const createDbSQL = "CREATE DATABASE IF NOT EXISTS `" + DB_NAME + "`";
-    await conn.query(createDbSQL);
+    // For hosted databases (PlanetScale, etc.), the database usually exists
+    try {
+        const createDbSQL = "CREATE DATABASE IF NOT EXISTS `" + DB_NAME + "`";
+        await conn.query(createDbSQL);
+    } catch (err) {
+        // Hosted databases may not allow CREATE DATABASE; skip silently
+        console.log(
+            "Note: Could not create database (likely hosted DB). Continuing..."
+        );
+    }
+
     // Use the database
     const useDbSQL = "USE `" + DB_NAME + "`";
     await conn.query(useDbSQL);

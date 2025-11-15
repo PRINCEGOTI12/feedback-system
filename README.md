@@ -34,16 +34,27 @@ Ensure backend is running before frontend.
 
 ## Deployment
 
-### Backend → Render / Railway
+**Important**: You **must** use a **hosted database** (PlanetScale, Render PostgreSQL, etc.) for Render deployment. Localhost MySQL won't work!
 
-1. Push to GitHub (see instructions below).
-2. Create new service on Render or Railway using the `backend` folder.
-3. Set environment variables:
-   - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
-   - Or use a hosted MySQL (e.g., Render MySQL, PlanetScale, or AWS RDS)
-4. Deploy and note the live backend URL (e.g., `https://feedback-api.onrender.com`)
+### Step 1: Set Up Database
 
-### Frontend → Vercel
+**Recommended: PlanetScale (Free MySQL Hosting)**
+
+See `PLANETSCALE_SETUP.md` for step-by-step instructions.
+
+### Step 2: Backend → Render
+
+1. Push to GitHub.
+2. Create new web service on Render using the `backend` folder.
+3. Set environment variables with your PlanetScale (or hosted DB) credentials:
+   - `DB_HOST` (e.g., `abc123.psdb.cloud`)
+   - `DB_PORT` (usually `3306`)
+   - `DB_USER`
+   - `DB_PASSWORD` (mark as Secret)
+   - `DB_NAME` (e.g., `feedback-system`)
+4. Deploy and note the live backend URL.
+
+### Step 3: Frontend → Vercel
 
 1. Push to GitHub.
 2. Import repo on Vercel, select the `frontend` folder.
