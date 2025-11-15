@@ -3,7 +3,9 @@ import FeedbackForm from "./components/FeedbackForm";
 import FeedbackTable from "./components/FeedbackTable";
 import Analytics from "./components/Analytics";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
+// For local dev: http://localhost:3000 (Netlify dev)
+// For production: auto-routes via netlify.toml
+const API_BASE = "/api";
 
 export default function App() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -16,7 +18,7 @@ export default function App() {
 
   async function fetchAll() {
     try {
-      const res = await fetch(`${API_BASE}/api/feedback`);
+      const res = await fetch(`${API_BASE}/feedback`);
       const data = await res.json();
       setFeedbacks(data);
     } catch (err) {
@@ -26,7 +28,7 @@ export default function App() {
 
   async function fetchStats() {
     try {
-      const res = await fetch(`${API_BASE}/api/stats`);
+      const res = await fetch(`${API_BASE}/stats`);
       const data = await res.json();
       setStats(data);
     } catch (err) {

@@ -1,78 +1,61 @@
-const mysql = require("mysql2/promise");
+const { Pool } = require("pg");
 const dotenv = require("dotenv");
 dotenv.config();
 
 const DB_HOST = process.env.DB_HOST || "127.0.0.1";
-const DB_PORT = process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306;
-const DB_USER = process.env.DB_USER || "root";
-const DB_PASSWORD = process.env.DB_PASSWORD || "1234";
-const DB_NAME = process.env.DB_NAME || "feedback system";
+const DB_PORT = process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432;
+const DB_USER = process.env.DB_USER || "postgres";
+const DB_PASSWORD = process.env.DB_PASSWORD || "password";
+const DB_NAME = process.env.DB_NAME || "feedback_system";
 
 async function init() {
-    // connect without database to ensure the database exists
-    let conn;
+    // Create a temporary connection to create the database
+    const adminPool = new Pool({
+        host: DB_HOST,
+        port: DB_PORT,
+        user: DB_USER,
+        password: DB_PASSWORD,
+        database: "postgres", // Connect to default postgres DB first
+    });
+
     try {
-        conn = await mysql.createConnection({
-            host: DB_HOST,
-            port: DB_PORT,
-            user: DB_USER,
-            password: DB_PASSWORD,
-            multipleStatements: true,
-        });
+        // Try to create database (will fail silently if it exists)
+        await adminPool.query(`CREATE DATABASE "${DB_NAME}"`);
+        console.log(`Database "${DB_NAME}" created (or already exists)`);
     } catch (err) {
-        console.error("Failed to connect to MySQL using", {
-            host: DB_HOST,
-            port: DB_PORT,
-            user: DB_USER,
-        });
-        console.error("Error:", err.message || err);
-        throw new Error(
-            "Unable to connect to MySQL. Ensure MySQL is running and credentials in .env are correct."
-        );
+        if (!err.message.includes("already exists")) {
+            console.log("Database already exists, continuing...");
+        }
+    } finally {
+        await adminPool.end();
     }
 
-    // Create database if not exists (use backticks to allow spaces if provided)
-    // For hosted databases (PlanetScale, etc.), the database usually exists
-    try {
-        const createDbSQL = "CREATE DATABASE IF NOT EXISTS `" + DB_NAME + "`";
-        await conn.query(createDbSQL);
-    } catch (err) {
-        // Hosted databases may not allow CREATE DATABASE; skip silently
-        console.log(
-            "Note: Could not create database (likely hosted DB). Continuing..."
-        );
-    }
-
-    // Use the database
-    const useDbSQL = "USE `" + DB_NAME + "`";
-    await conn.query(useDbSQL);
-
-    // Create table if not exists
-    const createTableSQL = `
-    CREATE TABLE IF NOT EXISTS \`feedbacks\` (
-      id BIGINT PRIMARY KEY AUTO_INCREMENT,
-      name VARCHAR(255) NOT NULL,
-      email VARCHAR(255),
-      message TEXT NOT NULL,
-      rating TINYINT,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB;
-  `;
-
-    await conn.query(createTableSQL);
-    await conn.end();
-
-    // create and return a pool connected to the database
-    const pool = mysql.createPool({
+    // Now connect to the actual database
+    const pool = new Pool({
         host: DB_HOST,
         port: DB_PORT,
         user: DB_USER,
         password: DB_PASSWORD,
         database: DB_NAME,
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0,
     });
+
+    // Create feedbacks table if it doesn't exist
+    try {
+        await pool.query(`
+      CREATE TABLE IF NOT EXISTS feedbacks (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255),
+        message TEXT NOT NULL,
+        rating INTEGER,
+        "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+        console.log("Feedbacks table created (or already exists)");
+    } catch (err) {
+        console.error("Error creating table:", err.message);
+        throw err;
+    }
 
     return pool;
 }

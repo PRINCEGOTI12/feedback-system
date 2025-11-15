@@ -1,0 +1,13 @@
+{
+    "name": "upteky-feedback-netlify",
+    "version": "1.0.0",
+    "description": "Feedback Dashboard - Fully deployed on Netlify",
+    "scripts": {
+        "build": "cd frontend && npm run build",
+        "dev": "netlify dev"
+    },
+    "dependencies": {
+        "pg": "^8.10.0"
+    },
+    "devDependencies": {}
+}
